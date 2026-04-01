@@ -1,0 +1,21 @@
+{
+  "name": "steady",
+  "version": "1.0.0",
+  "description": "A mobile-first mental health support app for iOS and Android.",
+  "main": "App.js",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "start:ios": "expo start --ios",
+    "start:android": "expo start --android",
+    "start:web": "expo start --web"
+  },
+  "dependencies": {
+    "expo": "~51.0.0",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0"
+  }
+}
