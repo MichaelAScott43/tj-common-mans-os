@@ -6,22 +6,39 @@
     "orientation": "portrait",
     "platforms": ["ios", "android", "web"],
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1B2D4F"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSContactsUsageDescription": "Used to store your trusted safety contacts.",
+        "NSSpeechRecognitionUsageDescription": "Used for voice input in the AI chat.",
+        "NSMicrophoneUsageDescription": "Used for voice input in the AI chat.",
+        "NSFaceIDUsageDescription": "Used to protect your private data."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#1B2D4F"
+      },
+      "permissions": [
+        "RECORD_AUDIO",
+        "READ_CONTACTS",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-localization"
+    ]
   }
 }
