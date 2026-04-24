@@ -1,0 +1,23 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "0.1.0",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "packageName": "com.steady.workmode",
+  "name": {
+    "short": "Steady Work",
+    "full": "Steady Work Mode"
+  },
+  "description": {
+    "short": "Work-safe life operations dashboard",
+    "full": "Placeholder Teams integration manifest for future Work Mode app."
+  },
+  "developer": {
+    "name": "Steady",
+    "websiteUrl": "https://example.com",
+    "privacyUrl": "https://example.com/privacy",
+    "termsOfUseUrl": "https://example.com/terms"
+  },
+  "accentColor": "#0f172a",
+  "staticTabs": []
+}

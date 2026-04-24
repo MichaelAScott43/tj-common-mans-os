@@ -1,54 +1,100 @@
-# Steady
-This is an app designed to help people who are in need of help globally.
+# Steady — Life Operations OS
 
-## Developer Setup
+Steady is a mobile-first Life Operations OS that gives everyday people executive-level support for organizing tasks, reminders, opportunities, notes, follow-ups, and AI-guided planning.
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (LTS version recommended)
-- No global install needed — Expo is run via the project's npm scripts
+## Product Positioning
+- Calm, premium, AI-powered command center.
+- Not a basic todo app.
+- Personal Mode and Work Mode are separated.
+- Personality Engine changes AI communication style without changing core app logic.
 
-### Running the App
+## Current Stack
+- Expo + React Native (iOS, Android, and Web)
+- Node.js HTTP placeholder backend (`server/index.js`)
+- Modular config/services for AI prompt personalities and integration interfaces
+- Demo-first architecture (works without live API credentials)
 
-After cloning the repo, install dependencies:
+## Core Modules Included
+- Landing page messaging and beta CTA framing
+- Life Command Center dashboard with AI briefing and Top 3 priorities
+- Tasks + reminders model
+- Opportunity tracker model
+- Notes + memory + social follow-up tracker
+- Integrations center with mock connect/disconnect state
+- Personal vs Work mode separation UI
+- Work route and add-in/Teams scaffold docs in `integrations/work`
+- Privacy & Trust page
+- Personality Settings with 7 modes:
+  - Steady Classic
+  - TJ Mode
+  - Arlane Mode
+  - Coach Mode
+  - Companion Mode
+  - Romantic Companion Mode (age gate + consent)
+  - Custom Persona
 
+## Setup
+### 1) Install
 ```bash
 npm install
 ```
 
-Then start the app:
-
+### 2) Run app
 ```bash
 npm start
 ```
 
-`npm start` automatically detects your operating system:
-- **macOS** — starts Expo for iOS + Android + Web
-- **Windows / Linux** — starts Expo for Android only (skips the Xcode / App Store prerequisite that only works on macOS)
+### Optional platform targets
+```bash
+npm run start:web
+npm run start:android
+npm run start:ios
+```
 
-You can also target a specific platform explicitly:
+### 3) Run backend placeholder
+```bash
+npm run server
+```
+
+## Environment Variables
+Create `.env` (all optional for demo mode):
 
 ```bash
-npm run start:android   # Android only (all platforms)
-npm run start:ios       # iOS only (macOS required)
-npm run start:web       # Web only (all platforms)
+PORT=4000
+OPENAI_BASE_URL=
+OPENAI_API_KEY=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+FIREBASE_PROJECT_ID=
+GOOGLE_CLIENT_ID=
+MICROSOFT_CLIENT_ID=
 ```
 
-#### On Windows or Linux (Android only)
-iOS development requires macOS because Xcode — Apple's iOS build tool — only runs on macOS. If you ever run `npx expo start` directly (without using `npm start`) on Windows or Linux and see:
+No API keys are hardcoded.
 
-```
-Error: Command failed: open https://apps.apple.com/us/app/id497799835
-```
+## Integration Roadmap
+- Gmail / Outlook personal sync (metadata first)
+- Google / Microsoft Calendar sync and conflict detection
+- Teams / Office add-in + Graph integration for Work Mode
+- Optional OAuth flows and token vaulting
 
-This means Expo is trying to open the Mac App Store to install Xcode, which is not possible on your operating system. Use `npm run start:android` or `npm run start:web` instead.
+## Mobile App Roadmap
+- Current app is mobile-first and touch-friendly in Expo.
+- Add offline queueing and push-notification orchestration.
+- Wrap web build with Capacitor or evolve into native React Native modules as needed.
 
-#### Building for iOS from Windows (EAS Build)
-To build and test on real iOS devices from a Windows machine, use [Expo Application Services (EAS) Build](https://docs.expo.dev/build/introduction/), which runs builds in the cloud on Apple hardware:
+## Teams / Office Add-on Roadmap
+See `integrations/work/` for manifest placeholders and Graph implementation steps.
 
-```bash
-npm install -g eas-cli
-eas build --platform ios
-```
+## Privacy Architecture
+- User-controlled integration permissions
+- Disconnect options for connected accounts
+- Personal/work data separation
+- Metadata-first ingestion defaults
+- Minimum necessary data retention
+- Crisis safety language escalation and emergency prompts (911 and 988 in U.S.)
 
-### Why iOS Needs macOS
-Apple requires that all iOS apps be compiled using Xcode, which is only available on macOS. This is an Apple platform restriction, not an Expo or project limitation. Windows and Linux developers can still contribute to the shared JavaScript/TypeScript code, run Android builds locally, and use EAS Build for cloud iOS builds.
+## Deployment
+- Frontend: Expo EAS or Expo web hosting pipeline
+- Backend: deploy `server/index.js` to Node-compatible host (Render/Fly/Railway)
+

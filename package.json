@@ -1,13 +1,14 @@
 {
   "name": "steady",
-  "version": "1.0.0",
-  "description": "A mobile-first mental health support app for iOS and Android.",
+  "version": "2.0.0",
+  "description": "Steady Life Operations OS mobile-first app.",
   "main": "App.js",
   "scripts": {
     "start": "node scripts/start.js",
     "start:ios": "expo start --ios",
     "start:android": "expo start --android",
-    "start:web": "expo start --web"
+    "start:web": "expo start --web",
+    "server": "node server/index.js"
   },
   "dependencies": {
     "expo": "~51.0.0",
