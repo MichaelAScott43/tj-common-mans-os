@@ -8,13 +8,18 @@
     "start:ios": "expo start --ios",
     "start:android": "expo start --android",
     "start:web": "expo start --web",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "dev": "npm start",
+    "build": "expo export --platform web"
   },
   "dependencies": {
     "expo": "~51.0.0",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
-    "react-native": "0.74.5"
+    "react-native": "0.74.5",
+    "express": "^4.21.2",
+    "mongoose": "^8.19.1",
+    "openai": "^4.77.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0"
