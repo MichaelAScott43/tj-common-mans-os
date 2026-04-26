@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator, Linking } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator, Linking, Animated, Easing, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:4000';
@@ -27,6 +27,8 @@ async function api(path, options = {}) {
 }
 
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 860;
   const [page, setPage] = useState('Landing');
   const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState([]);
@@ -64,8 +66,10 @@ export default function App() {
         setMessages((prev) => [...prev, { role: 'assistant', text: `Demo: ${res.demoLinks[0].label}` }]);
       }
       await refresh();
+      return { ok: true, data: res };
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'assistant', text: `That broke: ${error.message}` }]);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -109,7 +113,7 @@ export default function App() {
       </View>
 
       <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 110 }}>
-        {page === 'Landing' && <Landing openChat={() => setPage('Chat')} openTasks={() => setPage('Tasks')} />}
+        {page === 'Landing' && <Landing openChat={() => setPage('Chat')} openTasks={() => setPage('Tasks')} sendCommand={sendCommand} isMobile={isMobile} setInput={setInput} />}
 
         {page === 'Chat' && (
           <Section title="TJ Chat">
@@ -182,16 +186,106 @@ export default function App() {
   );
 }
 
-function Landing({ openChat, openTasks }) {
+function Landing({ openChat, openTasks, sendCommand, isMobile, setInput }) {
+  const [heroInput, setHeroInput] = useState('');
+  const [heroConversation, setHeroConversation] = useState([]);
+  const [exampleIndex, setExampleIndex] = useState(0);
+  const cursorOpacity = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0.35)).current;
+
+  const examples = [
+    'Order my usual pizza',
+    'Remind me to pay rent Friday',
+    'Draft a text to my wife',
+    'Add oil change to my calendar'
+  ];
+
+  useEffect(() => {
+    const rotator = setInterval(() => setExampleIndex((prev) => (prev + 1) % examples.length), 2600);
+    return () => clearInterval(rotator);
+  }, []);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(cursorOpacity, { toValue: 0.15, duration: 450, useNativeDriver: true }),
+        Animated.timing(cursorOpacity, { toValue: 1, duration: 450, useNativeDriver: true })
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 0.78, duration: 1600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0.35, duration: 1600, easing: Easing.inOut(Easing.ease), useNativeDriver: true })
+      ])
+    ).start();
+  }, [cursorOpacity, glowAnim]);
+
+  function demoFallback(userInput) {
+    const low = userInput.toLowerCase();
+    if (low.includes('pizza') || low.includes('order')) return 'Pepperoni again? Bold strategy. Want me to prep the order?';
+    if (low.includes('rent') || low.includes('remind')) return 'Reminder loaded. Future-you can thank current-you on Friday.';
+    if (low.includes('text') || low.includes('wife')) return 'Draft ready: “Running late, be there soon.” Want me to queue edits?';
+    if (low.includes('calendar') || low.includes('oil')) return 'Got it. Oil change draft added to your pending calendar tasks.';
+    return 'I got it. Say it your way and I will translate the chaos into a plan.';
+  }
+
+  async function handleHeroSubmit(rawInput) {
+    const userInput = rawInput.trim();
+    if (!userInput) return;
+    setHeroConversation((prev) => [...prev, `You: ${userInput}`]);
+
+    try {
+      await sendCommand(userInput);
+      setHeroConversation((prev) => [...prev, 'TJ: Got it. Dropping this into your active task flow now.']);
+    } catch (_error) {
+      setHeroConversation((prev) => [...prev, `TJ: ${demoFallback(userInput)}`]);
+    }
+
+    setInput(userInput);
+    setHeroInput('');
+    setTimeout(() => openChat(), 300);
+  }
+
   return (
     <>
       <Section title="Hero">
-        <Text style={styles.hero}>TJ - The Common Man&apos;s OS</Text>
-        <Text style={styles.text}>Built for real life. Dedicated to the common man.</Text>
-        <Text style={styles.text}>Dark, rugged, practical assistant energy. Hero image slot: gritty robot sidekick saying “I got it.”</Text>
-        <View style={styles.row}>
-          <Pressable style={styles.cta} onPress={openChat}><Text style={styles.ctaTxt}>Start Talking to TJ</Text></Pressable>
-          <Pressable style={styles.alt}><Text style={styles.ctaTxt}>Watch Demo</Text></Pressable>
+        <View style={[styles.heroSplit, isMobile && styles.heroSplitMobile]}>
+          <View style={styles.heroLeft}>
+            <Text style={styles.hero}>TJ - The Common Man&apos;s OS</Text>
+            <Text style={styles.text}>Built for real life. Dedicated to the common man.</Text>
+            <Text style={styles.text}>Talk normal. TJ handles the annoying part.</Text>
+            <View style={styles.row}>
+              <Pressable style={styles.cta} onPress={openChat}><Text style={styles.ctaTxt}>Start Talking to TJ</Text></Pressable>
+              <Pressable style={styles.alt} onPress={() => setHeroInput(examples[exampleIndex])}><Text style={styles.ctaTxt}>Watch Demo</Text></Pressable>
+            </View>
+
+            <View style={styles.promptCard}>
+              <Text style={styles.label}>What do you need handled?</Text>
+              <TextInput
+                style={styles.input}
+                value={heroInput}
+                onChangeText={setHeroInput}
+                placeholder={examples[exampleIndex]}
+                placeholderTextColor="#9ca3af"
+              />
+              <View style={styles.row}>
+                <Pressable style={styles.cta} onPress={() => handleHeroSubmit(heroInput)}><Text style={styles.ctaTxt}>Send to TJ</Text></Pressable>
+                <Text style={styles.rotator}>Try: {examples[exampleIndex]}<Animated.Text style={{ opacity: cursorOpacity }}>|</Animated.Text></Text>
+              </View>
+              {heroConversation.slice(-2).map((line, idx) => <Text key={`${line}-${idx}`} style={styles.text}>{line}</Text>)}
+            </View>
+          </View>
+
+          <Animated.View style={[styles.heroRight, { opacity: glowAnim }]}> 
+            <View style={styles.robotCard}>
+              <Text style={styles.robotTitle}>TJ</Text>
+              <Text style={styles.text}>Rugged southern robot. Boots up, feet up, one hand on a wrench, one eye on your to-do list.</Text>
+              <Text style={styles.text}>Industrial garage/bar glow. Warm light. Zero panic.</Text>
+              <Text style={styles.robotQuote}>“I got it.”</Text>
+              <Text style={styles.smoke}>~ subtle smoke + neon flicker ambience ~</Text>
+            </View>
+          </Animated.View>
         </View>
       </Section>
 
@@ -245,7 +339,17 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: 10 },
   section: { backgroundColor: '#18181b', borderColor: '#3f3f46', borderWidth: 1, borderRadius: 14, padding: 12, marginVertical: 6 },
   sectionTitle: { color: '#a1a1aa', fontSize: 11, letterSpacing: 1, marginBottom: 8 },
+  heroSplit: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
+  heroSplitMobile: { flexDirection: 'column' },
+  heroLeft: { flex: 1.2 },
+  heroRight: { flex: 1, justifyContent: 'center' },
   hero: { color: '#fff7ed', fontSize: 24, fontWeight: '800', marginBottom: 8 },
+  promptCard: { borderWidth: 1, borderColor: '#52525b', borderRadius: 12, padding: 10, marginTop: 10, backgroundColor: '#111113' },
+  rotator: { color: '#fdba74', flex: 1, paddingTop: 9, paddingLeft: 4, fontSize: 12 },
+  robotCard: { borderWidth: 1, borderColor: '#7c2d12', backgroundColor: '#27180f', borderRadius: 14, padding: 12, minHeight: 215 },
+  robotTitle: { color: '#fb923c', fontSize: 22, fontWeight: '800', marginBottom: 6 },
+  robotQuote: { color: '#fed7aa', fontSize: 22, fontWeight: '700', marginTop: 10 },
+  smoke: { color: '#a1a1aa', fontSize: 12, marginTop: 8, fontStyle: 'italic' },
   text: { color: '#e4e4e7', marginBottom: 6 },
   row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6 },
   cta: { backgroundColor: '#ea580c', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
