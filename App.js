@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator, Linking, Animated, Easing, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { demoProcurementAlerts } from './src/data/demoData';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 const USER_ID = 'demo-user';
-const pages = ['Landing', 'Chat', 'Tasks', 'Preferences', 'Beta'];
+const pages = ['Landing', 'Chat', 'Tasks', 'Alerts', 'Preferences', 'Beta'];
 
 const commandExamples = [
   'TJ, remind me to pay rent Friday.',
@@ -37,6 +38,7 @@ export default function App() {
   const [preferences, setPreferences] = useState(null);
   const [betaEmail, setBetaEmail] = useState('');
   const [betaList, setBetaList] = useState([]);
+  const [selectedAlertId, setSelectedAlertId] = useState(demoProcurementAlerts[0]?.id || null);
 
   const pendingTasks = useMemo(() => tasks.filter((x) => x.status === 'pending'), [tasks]);
 
@@ -146,6 +148,55 @@ export default function App() {
                 </View>
               </View>
             ))}
+          </Section>
+        )}
+
+        {page === 'Alerts' && (
+          <Section title="Procurement Intelligence Alerts">
+            <Text style={styles.text}>Click an alert for full root-cause drilldown, impact, evidence, ownership, and next best action.</Text>
+            <View style={[styles.alertLayout, isMobile && styles.alertLayoutMobile]}>
+              <View style={styles.alertList}>
+                {demoProcurementAlerts.map((alert) => (
+                  <Pressable
+                    key={alert.id}
+                    style={[styles.alertCard, selectedAlertId === alert.id && styles.alertCardActive]}
+                    onPress={() => setSelectedAlertId(alert.id)}
+                  >
+                    <View style={styles.alertRow}>
+                      <Text style={styles.alertTitle}>{alert.title}</Text>
+                      <Text style={[styles.priorityPill, alert.priority === 'Critical' ? styles.priorityCritical : alert.priority === 'High' ? styles.priorityHigh : styles.priorityMedium]}>{alert.priority}</Text>
+                    </View>
+                    <Text style={styles.alertType}>{alert.type}</Text>
+                    <Text style={styles.alertSnippet}>{alert.happened}</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <View style={styles.alertDetail}>
+                {demoProcurementAlerts.filter((x) => x.id === selectedAlertId).map((alert) => (
+                  <View key={alert.id}>
+                    <Text style={styles.alertDetailTitle}>{alert.title}</Text>
+                    <Text style={styles.text}>1. What happened: {alert.happened}</Text>
+                    <Text style={styles.text}>2. What is driving it: {alert.drivingIt}</Text>
+                    <Text style={styles.text}>3. Financial impact: {alert.financialImpact}</Text>
+                    <Text style={styles.text}>4. Root cause: {alert.rootCause}</Text>
+                    <Text style={styles.label}>5. Related entities</Text>
+                    <Text style={styles.text}>Supplier: {alert.related.supplier}</Text>
+                    <Text style={styles.text}>PO: {alert.related.po}</Text>
+                    <Text style={styles.text}>Category: {alert.related.category}</Text>
+                    <Text style={styles.text}>Contract: {alert.related.contract}</Text>
+                    <Text style={styles.text}>Buyer: {alert.related.buyer}</Text>
+                    <Text style={styles.text}>Item: {alert.related.item}</Text>
+                    <Text style={styles.label}>6. Evidence behind the alert</Text>
+                    {alert.evidence.map((line) => <Text key={`${alert.id}-${line}`} style={styles.text}>• {line}</Text>)}
+                    <Text style={styles.text}>7. Recommended corrective action: {alert.recommendedAction}</Text>
+                    <Text style={styles.text}>8. Priority level: {alert.priority}</Text>
+                    <Text style={styles.text}>9. Owner / responsible role: {alert.owner}</Text>
+                    <Text style={styles.text}>10. Next best action: {alert.nextBestAction}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           </Section>
         )}
 
@@ -396,5 +447,20 @@ const styles = StyleSheet.create({
   navBtn: { borderWidth: 1, borderColor: '#3f3f46', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, marginRight: 6 },
   navActive: { borderColor: '#fb923c', backgroundColor: '#431407' },
   navTxt: { color: '#a1a1aa', fontSize: 12 },
-  navTxtActive: { color: '#fdba74' }
+  navTxtActive: { color: '#fdba74' },
+  alertLayout: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  alertLayoutMobile: { flexDirection: 'column' },
+  alertList: { flex: 1.05 },
+  alertDetail: { flex: 1.2, borderWidth: 1, borderColor: '#5a3020', borderRadius: 12, backgroundColor: '#120d0a', padding: 10 },
+  alertCard: { borderWidth: 1, borderColor: '#4d2a1b', borderRadius: 10, padding: 10, marginBottom: 8, backgroundColor: '#0f0b08' },
+  alertCardActive: { borderColor: '#fb923c', backgroundColor: '#25140c' },
+  alertRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' },
+  alertTitle: { color: '#fff7ed', fontWeight: '700', flex: 1, marginBottom: 4 },
+  alertType: { color: '#fdba74', fontSize: 12, marginBottom: 4 },
+  alertSnippet: { color: '#d6d3d1', fontSize: 12 },
+  priorityPill: { overflow: 'hidden', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, color: '#fff', fontSize: 10, fontWeight: '700' },
+  priorityCritical: { backgroundColor: '#991b1b' },
+  priorityHigh: { backgroundColor: '#b45309' },
+  priorityMedium: { backgroundColor: '#1d4ed8' },
+  alertDetailTitle: { color: '#fb923c', fontSize: 18, fontWeight: '700', marginBottom: 8 }
 });
