@@ -1,100 +1,72 @@
-# Steady — Life Operations OS
+# TJ - The Common Man's OS
 
-Steady is a mobile-first Life Operations OS that gives everyday people executive-level support for organizing tasks, reminders, opportunities, notes, follow-ups, and AI-guided planning.
+**Tagline:** Talk normal. TJ handles the annoying part.
 
-## Product Positioning
-- Calm, premium, AI-powered command center.
-- Not a basic todo app.
-- Personal Mode and Work Mode are separated.
-- Personality Engine changes AI communication style without changing core app logic.
+TJ is a practical AI sidekick for regular people. It turns natural commands into structured tasks, asks for confirmation, and keeps daily life organized without pretending to be human.
 
-## Current Stack
-- Expo + React Native (iOS, Android, and Web)
-- Node.js HTTP placeholder backend (`server/index.js`)
-- Modular config/services for AI prompt personalities and integration interfaces
-- Demo-first architecture (works without live API credentials)
+## MVP Features
+- Landing, Chat, Tasks, Preferences, and Beta signup screens
+- Conversational command input with quick examples
+- Intent parsing service with supported intents:
+  - `conversation`
+  - `reminder`
+  - `calendar_event`
+  - `food_order_prep`
+  - `message_draft`
+  - `shopping_reorder`
+  - `errand_task`
+  - `unknown`
+- Pending task confirmation workflow (confirm/cancel)
+- Preferences persistence for food, contacts, and tone
+- Safe action router that **simulates only** (no real-world execution)
+- Alexa-compatible endpoint + lambda handler
 
-## Core Modules Included
-- Landing page messaging and beta CTA framing
-- Life Command Center dashboard with AI briefing and Top 3 priorities
-- Tasks + reminders model
-- Opportunity tracker model
-- Notes + memory + social follow-up tracker
-- Integrations center with mock connect/disconnect state
-- Personal vs Work mode separation UI
-- Work route and add-in/Teams scaffold docs in `integrations/work`
-- Privacy & Trust page
-- Personality Settings with 7 modes:
-  - Steady Classic
-  - TJ Mode
-  - Arlane Mode
-  - Coach Mode
-  - Companion Mode
-  - Romantic Companion Mode (age gate + consent)
-  - Custom Persona
+## Safety Rules
+TJ never spends money, sends messages, or books services without explicit confirmation.
+In MVP mode, all such actions are simulated.
+
+## Stack
+- Expo + React Native frontend
+- Node.js + Express backend
+- MongoDB/Mongoose models with in-memory fallback for local dev
+- Optional OpenAI-powered intent parsing (rule-based parser fallback)
+
+## API Routes
+- `POST /api/tj/command`
+- `GET /api/tj/tasks`
+- `POST /api/tj/tasks`
+- `GET /api/tj/tasks/:id`
+- `POST /api/tj/tasks/:id/confirm`
+- `POST /api/tj/tasks/:id/cancel`
+- `GET /api/tj/preferences`
+- `POST /api/tj/preferences`
+- `POST /api/tj/alexa`
 
 ## Setup
-### 1) Install
 ```bash
 npm install
-```
-
-### 2) Run app
-```bash
-npm start
-```
-
-### Optional platform targets
-```bash
-npm run start:web
-npm run start:android
-npm run start:ios
-```
-
-### 3) Run backend placeholder
-```bash
 npm run server
+npm run dev
 ```
+
+## Scripts
+- `npm start` - Expo app
+- `npm run dev` - alias to start app
+- `npm run server` - Express API
+- `npm run build` - Expo web export
 
 ## Environment Variables
-Create `.env` (all optional for demo mode):
+- `PORT=4000`
+- `MONGODB_URI=<atlas-uri>`
+- `MONGODB_DB=steady`
+- `OPENAI_API_KEY=<optional>`
+- `OPENAI_MODEL=gpt-4.1-mini`
+- `EXPO_PUBLIC_API_BASE_URL=http://localhost:4000`
+- `TJ_API_BASE_URL=http://localhost:4000`
 
-```bash
-PORT=4000
-OPENAI_BASE_URL=
-OPENAI_API_KEY=
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-FIREBASE_PROJECT_ID=
-GOOGLE_CLIENT_ID=
-MICROSOFT_CLIENT_ID=
-```
-
-No API keys are hardcoded.
-
-## Integration Roadmap
-- Gmail / Outlook personal sync (metadata first)
-- Google / Microsoft Calendar sync and conflict detection
-- Teams / Office add-in + Graph integration for Work Mode
-- Optional OAuth flows and token vaulting
-
-## Mobile App Roadmap
-- Current app is mobile-first and touch-friendly in Expo.
-- Add offline queueing and push-notification orchestration.
-- Wrap web build with Capacitor or evolve into native React Native modules as needed.
-
-## Teams / Office Add-on Roadmap
-See `integrations/work/` for manifest placeholders and Graph implementation steps.
-
-## Privacy Architecture
-- User-controlled integration permissions
-- Disconnect options for connected accounts
-- Personal/work data separation
-- Metadata-first ingestion defaults
-- Minimum necessary data retention
-- Crisis safety language escalation and emergency prompts (911 and 988 in U.S.)
-
-## Deployment
-- Frontend: Expo EAS or Expo web hosting pipeline
-- Backend: deploy `server/index.js` to Node-compatible host (Render/Fly/Railway)
-
+## Roadmap
+- Native speech-to-text for true voice-first UX
+- Push notifications for reminders
+- Auth-bound multi-user data isolation
+- Google Calendar sync
+- Vendor integrations for food and groceries
