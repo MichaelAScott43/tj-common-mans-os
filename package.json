@@ -10,7 +10,8 @@
     "start:web": "expo start --web",
     "server": "node server/index.js",
     "dev": "npm start",
-    "build": "expo export --platform web"
+    "build": "expo export --platform web",
+    "build:frontend": "npm run build"
   },
   "dependencies": {
     "expo": "~51.0.0",

@@ -108,7 +108,7 @@ export default function App() {
     <SafeAreaView style={styles.safe}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.brand}>TJ - The Common Man&apos;s OS</Text>
+        <Text style={styles.brand}>TJ - The Lazy Man&apos;s OS</Text>
         <Text style={styles.tagline}>Talk normal. TJ handles the annoying part.</Text>
       </View>
 
@@ -252,8 +252,8 @@ function Landing({ openChat, openTasks, sendCommand, isMobile, setInput }) {
       <Section title="Hero">
         <View style={[styles.heroSplit, isMobile && styles.heroSplitMobile]}>
           <View style={styles.heroLeft}>
-            <Text style={styles.hero}>TJ - The Common Man&apos;s OS</Text>
-            <Text style={styles.text}>Built for real life. Dedicated to the common man.</Text>
+            <Text style={styles.hero}>TJ - The Lazy Man&apos;s OS</Text>
+            <Text style={styles.kicker}>Talk normal. TJ handles the annoying part.</Text>
             <Text style={styles.text}>Talk normal. TJ handles the annoying part.</Text>
             <View style={styles.row}>
               <Pressable style={styles.cta} onPress={openChat}><Text style={styles.ctaTxt}>Start Talking to TJ</Text></Pressable>
@@ -280,8 +280,8 @@ function Landing({ openChat, openTasks, sendCommand, isMobile, setInput }) {
           <Animated.View style={[styles.heroRight, { opacity: glowAnim }]}> 
             <View style={styles.robotCard}>
               <Text style={styles.robotTitle}>TJ</Text>
-              <Text style={styles.text}>Rugged southern robot. Boots up, feet up, one hand on a wrench, one eye on your to-do list.</Text>
-              <Text style={styles.text}>Industrial garage/bar glow. Warm light. Zero panic.</Text>
+              <Text style={styles.text}>Rugged, sarcastic sidekick with built-in southern flavor.</Text>
+              <Text style={styles.text}>Orders food. Schedules life. Handles the stuff you do not want to.</Text>
               <Text style={styles.robotQuote}>“I got it.”</Text>
               <Text style={styles.smoke}>~ subtle smoke + neon flicker ambience ~</Text>
             </View>
@@ -290,7 +290,21 @@ function Landing({ openChat, openTasks, sendCommand, isMobile, setInput }) {
       </Section>
 
       <Section title="What TJ Does">
-        {['Order it.', 'Schedule it.', 'Handle it.', 'Save time.', 'Live better.'].map((x) => <Text key={x} style={styles.text}>• {x}</Text>)}
+        <View style={styles.featureGrid}>
+          {[
+            ['🍔', 'ORDER IT.', 'Food, groceries, and whatever you are craving.'],
+            ['📅', 'SCHEDULE IT.', 'Appointments, reminders, and calendar wrangling.'],
+            ['🚗', 'HANDLE IT.', 'Errands, rides, and life-admin tasks.'],
+            ['💰', 'SAVE TIME.', 'Less busywork. More time for real life.'],
+            ['😏', 'LAUGH MORE.', 'Dry humor, honest answers, no fake hype.']
+          ].map(([icon, title, detail]) => (
+            <View key={title} style={styles.featureCard}>
+              <Text style={styles.featureIcon}>{icon}</Text>
+              <Text style={styles.featureTitle}>{title}</Text>
+              <Text style={styles.featureText}>{detail}</Text>
+            </View>
+          ))}
+        </View>
       </Section>
 
       <Section title="Just Talk to TJ">
@@ -298,7 +312,13 @@ function Landing({ openChat, openTasks, sendCommand, isMobile, setInput }) {
       </Section>
 
       <Section title="Built Different">
-        {['Honest', 'Funny', 'Loyal', 'Private', 'Built for regular people'].map((x) => <Text key={x} style={styles.text}>• {x}</Text>)}
+        {[
+          '✓ Honest. Not here to sugarcoat it.',
+          '✓ Sarcastic. Because life is ridiculous.',
+          '✓ Loyal. TJ is in your corner.',
+          '✓ Private. Your data stays yours.',
+          '✓ Always improving. TJ gets better every day.'
+        ].map((x) => <Text key={x} style={styles.text}>{x}</Text>)}
         <View style={styles.row}>
           <Pressable style={styles.cta} onPress={openTasks}><Text style={styles.ctaTxt}>View Tasks</Text></Pressable>
           <Pressable style={styles.alt}><Text style={styles.ctaTxt}>Join Beta</Text></Pressable>
@@ -332,28 +352,34 @@ function Field({ label, value, onChange }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0a0a0a' },
-  header: { borderBottomWidth: 1, borderBottomColor: '#3f3f46', padding: 14 },
-  brand: { color: '#fb923c', fontWeight: '700', fontSize: 18 },
+  safe: { flex: 1, backgroundColor: '#090705' },
+  header: { borderBottomWidth: 1, borderBottomColor: '#42210f', padding: 14, backgroundColor: '#0d0906' },
+  brand: { color: '#f6c089', fontWeight: '700', fontSize: 18 },
   tagline: { color: '#d4d4d8', marginTop: 4 },
   body: { paddingHorizontal: 10 },
-  section: { backgroundColor: '#18181b', borderColor: '#3f3f46', borderWidth: 1, borderRadius: 14, padding: 12, marginVertical: 6 },
-  sectionTitle: { color: '#a1a1aa', fontSize: 11, letterSpacing: 1, marginBottom: 8 },
+  section: { backgroundColor: '#15100d', borderColor: '#4a2817', borderWidth: 1, borderRadius: 14, padding: 12, marginVertical: 6 },
+  sectionTitle: { color: '#d6a977', fontSize: 11, letterSpacing: 1, marginBottom: 8 },
   heroSplit: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
   heroSplitMobile: { flexDirection: 'column' },
   heroLeft: { flex: 1.2 },
   heroRight: { flex: 1, justifyContent: 'center' },
-  hero: { color: '#fff7ed', fontSize: 24, fontWeight: '800', marginBottom: 8 },
-  promptCard: { borderWidth: 1, borderColor: '#52525b', borderRadius: 12, padding: 10, marginTop: 10, backgroundColor: '#111113' },
+  hero: { color: '#fff7ed', fontSize: 30, fontWeight: '800', marginBottom: 8 },
+  kicker: { color: '#fb923c', fontSize: 26, fontStyle: 'italic', marginBottom: 8 },
+  promptCard: { borderWidth: 1, borderColor: '#6f3b21', borderRadius: 12, padding: 10, marginTop: 10, backgroundColor: '#100c09' },
   rotator: { color: '#fdba74', flex: 1, paddingTop: 9, paddingLeft: 4, fontSize: 12 },
-  robotCard: { borderWidth: 1, borderColor: '#7c2d12', backgroundColor: '#27180f', borderRadius: 14, padding: 12, minHeight: 215 },
+  robotCard: { borderWidth: 1, borderColor: '#7c2d12', backgroundColor: '#26150d', borderRadius: 14, padding: 12, minHeight: 215 },
   robotTitle: { color: '#fb923c', fontSize: 22, fontWeight: '800', marginBottom: 6 },
   robotQuote: { color: '#fed7aa', fontSize: 22, fontWeight: '700', marginTop: 10 },
   smoke: { color: '#a1a1aa', fontSize: 12, marginTop: 8, fontStyle: 'italic' },
-  text: { color: '#e4e4e7', marginBottom: 6 },
+  text: { color: '#f1e4d7', marginBottom: 6 },
+  featureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  featureCard: { width: '48%', borderWidth: 1, borderColor: '#59301d', borderRadius: 12, padding: 10, backgroundColor: '#110d0a' },
+  featureIcon: { fontSize: 20, marginBottom: 4 },
+  featureTitle: { color: '#f0b57a', fontWeight: '800', marginBottom: 4 },
+  featureText: { color: '#dcc3ab', fontSize: 12 },
   row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6 },
-  cta: { backgroundColor: '#ea580c', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
-  alt: { backgroundColor: '#3f3f46', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
+  cta: { backgroundColor: '#e09a57', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
+  alt: { backgroundColor: '#3f2b20', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
   ctaTxt: { color: 'white', fontWeight: '700' },
   chatBox: { borderWidth: 1, borderColor: '#3f3f46', borderRadius: 10, padding: 10, backgroundColor: '#09090b', maxHeight: 280 },
   msg: { marginBottom: 8 },
