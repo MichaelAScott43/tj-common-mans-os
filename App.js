@@ -1,466 +1,256 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator, Linking, Animated, Easing, useWindowDimensions } from 'react-native';
+import React, { useState } from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  TextInput
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { demoProcurementAlerts } from './src/data/demoData';
-
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-const USER_ID = 'demo-user';
-const pages = ['Landing', 'Chat', 'Tasks', 'Alerts', 'Preferences', 'Beta'];
-
-const commandExamples = [
-  'TJ, remind me to pay rent Friday.',
-  'TJ, order my usual pizza.',
-  'TJ, add oil change to my calendar.',
-  "TJ, draft a text saying I'm running late."
-];
-
-async function api(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': USER_ID,
-      ...(options.headers || {})
-    }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
+import CharacterSwitcher from './src/components/CharacterSwitcher';
+import {
+  tjWelcomeMessages,
+  arlaneWelcomeMessages
+} from './src/data/tjWelcomeMessages';
 
 export default function App() {
-  const { width } = useWindowDimensions();
-  const isMobile = width < 860;
-  const [page, setPage] = useState('Landing');
-  const [loading, setLoading] = useState(false);
-  const [tasks, setTasks] = useState([]);
-  const [messages, setMessages] = useState([{ role: 'assistant', text: 'Howdy. I am TJ. Talk normal, I handle the annoying part.' }]);
+  const [activeCharacter, setActiveCharacter] = useState('TJ');
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      text: tjWelcomeMessages[0]
+    }
+  ]);
   const [input, setInput] = useState('');
-  const [preferences, setPreferences] = useState(null);
-  const [betaEmail, setBetaEmail] = useState('');
-  const [betaList, setBetaList] = useState([]);
-  const [selectedAlertId, setSelectedAlertId] = useState(demoProcurementAlerts[0]?.id || null);
 
-  const pendingTasks = useMemo(() => tasks.filter((x) => x.status === 'pending'), [tasks]);
+  function switchCharacter(character) {
+    setActiveCharacter(character);
 
-  async function refresh() {
-    try {
-      const [taskRes, prefRes] = await Promise.all([api('/api/tj/tasks'), api('/api/tj/preferences')]);
-      setTasks(taskRes.tasks || []);
-      setPreferences(prefRes.preference || {});
-    } catch (error) {
-      setMessages((prev) => [...prev, { role: 'assistant', text: `Backend issue: ${error.message}` }]);
-    }
-  }
+    const welcome =
+      character === 'TJ'
+        ? tjWelcomeMessages[Math.floor(Math.random() * tjWelcomeMessages.length)]
+        : arlaneWelcomeMessages[Math.floor(Math.random() * arlaneWelcomeMessages.length)];
 
-  useEffect(() => {
-    refresh();
-  }, []);
-
-  async function sendCommand(text) {
-    if (!text.trim()) return;
-    setMessages((prev) => [...prev, { role: 'user', text }]);
-    setInput('');
-    setLoading(true);
-    try {
-      const res = await api('/api/tj/command', { method: 'POST', body: JSON.stringify({ commandText: text, source: 'mobile' }) });
-      setMessages((prev) => [...prev, { role: 'assistant', text: res.responseForUser }, { role: 'assistant', text: `Next: ${res.nextStep}` }]);
-      if ((res.demoLinks || []).length) {
-        setMessages((prev) => [...prev, { role: 'assistant', text: `Demo: ${res.demoLinks[0].label}` }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'assistant',
+        text: welcome
       }
-      await refresh();
-      return { ok: true, data: res };
-    } catch (error) {
-      setMessages((prev) => [...prev, { role: 'assistant', text: `That broke: ${error.message}` }]);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    ]);
   }
 
-  async function savePrefs() {
-    setLoading(true);
-    try {
-      const res = await api('/api/tj/preferences', { method: 'POST', body: JSON.stringify(preferences || {}) });
-      setPreferences(res.preference);
-      setMessages((prev) => [...prev, { role: 'assistant', text: 'Preferences saved. Look at you being organized.' }]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  function handleSend() {
+    if (!input.trim()) return;
 
-  async function taskAction(id, action) {
-    setLoading(true);
-    try {
-      await api(`/api/tj/tasks/${id}/${action}`, { method: 'POST' });
-      await refresh();
-    } finally {
-      setLoading(false);
-    }
-  }
+    const userMessage = input.trim();
 
-  function joinBeta() {
-    if (!betaEmail.includes('@')) return;
-    const updated = [...betaList, betaEmail.trim().toLowerCase()];
-    setBetaList(updated);
-    setBetaEmail('');
-    setMessages((prev) => [...prev, { role: 'assistant', text: 'Beta seat saved. You are on the list.' }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        text: userMessage
+      },
+      {
+        role: 'assistant',
+        text:
+          activeCharacter === 'TJ'
+            ? 'Got it. Let me help you figure this out one step at a time.'
+            : 'Take a breath first. We do not need to solve everything at once.'
+      }
+    ]);
+
+    setInput('');
   }
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <Text style={styles.brand}>TJ - The Lazy Man&apos;s OS</Text>
-        <Text style={styles.tagline}>Talk normal. TJ handles the annoying part.</Text>
-      </View>
 
-      <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 110 }}>
-        {page === 'Landing' && <Landing openChat={() => setPage('Chat')} openTasks={() => setPage('Tasks')} sendCommand={sendCommand} isMobile={isMobile} setInput={setInput} />}
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.heroCard}>
+          <Text style={styles.brand}>STEADY</Text>
+          <Text style={styles.tagline}>The Common Man OS</Text>
+          <Text style={styles.description}>
+            AI-powered life navigation for hard-working people.
+          </Text>
+        </View>
 
-        {page === 'Chat' && (
-          <Section title="TJ Chat">
-            <Text style={styles.text}>Voice input architecture is ready. For MVP we run text-first commands.</Text>
-            <View style={styles.examplesWrap}>{commandExamples.map((example) => <Pressable key={example} onPress={() => sendCommand(example)} style={styles.exampleBtn}><Text style={styles.exampleTxt}>{example}</Text></Pressable>)}</View>
-            <View style={styles.chatBox}>
-              {messages.slice(-12).map((msg, idx) => (
-                <Text key={`${idx}-${msg.text}`} style={[styles.msg, msg.role === 'user' ? styles.user : styles.assistant]}>{msg.role === 'user' ? 'You: ' : 'TJ: '}{msg.text}</Text>
-              ))}
-            </View>
-            <TextInput style={styles.input} value={input} onChangeText={setInput} placeholder="Tell TJ what to handle..." placeholderTextColor="#9ca3af" />
-            <View style={styles.row}>
-              <Pressable style={styles.cta} onPress={() => sendCommand(input)}><Text style={styles.ctaTxt}>Send</Text></Pressable>
-              <Pressable style={styles.alt} onPress={() => setMessages((prev) => [...prev, { role: 'assistant', text: 'Mic input placeholder ready for native speech module.' }])}><Text style={styles.ctaTxt}>Voice Ready</Text></Pressable>
-            </View>
-          </Section>
-        )}
+        <CharacterSwitcher
+          activeCharacter={activeCharacter}
+          onSwitch={switchCharacter}
+        />
 
-        {page === 'Tasks' && (
-          <Section title="Tasks">
-            <Text style={styles.text}>Pending confirmations: {pendingTasks.length}</Text>
-            {tasks.map((task) => (
-              <View key={task.id || task._id} style={styles.card}>
-                <Text style={styles.cardTitle}>{task.title}</Text>
-                <Text style={styles.text}>{task.intent} · {task.status}</Text>
-                {task.vendor ? <Text style={styles.text}>Vendor: {task.vendor}</Text> : null}
-                <View style={styles.row}>
-                  <Pressable style={styles.cta} onPress={() => taskAction(task.id || task._id, 'confirm')}><Text style={styles.ctaTxt}>Confirm</Text></Pressable>
-                  <Pressable style={styles.alt} onPress={() => taskAction(task.id || task._id, 'cancel')}><Text style={styles.ctaTxt}>Cancel</Text></Pressable>
-                </View>
-              </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            {activeCharacter === 'TJ' ? 'Talk to TJ' : 'Talk to Arlane'}
+          </Text>
+
+          <Text style={styles.sectionDescription}>
+            {activeCharacter === 'TJ'
+              ? 'TJ helps with reminders, errands, planning, affordability, and everyday life logistics.'
+              : 'Arlane provides grounding support, encouragement, and emotional decompression when life feels heavy.'}
+          </Text>
+
+          <View style={styles.chatBox}>
+            {messages.slice(-10).map((msg, idx) => (
+              <Text
+                key={`${idx}-${msg.text}`}
+                style={[
+                  styles.message,
+                  msg.role === 'user'
+                    ? styles.userMessage
+                    : styles.assistantMessage
+                ]}
+              >
+                {msg.role === 'user' ? 'You: ' : `${activeCharacter}: `}
+                {msg.text}
+              </Text>
             ))}
-          </Section>
-        )}
+          </View>
 
-        {page === 'Alerts' && (
-          <Section title="Procurement Intelligence Alerts">
-            <Text style={styles.text}>Click an alert for full root-cause drilldown, impact, evidence, ownership, and next best action.</Text>
-            <View style={[styles.alertLayout, isMobile && styles.alertLayoutMobile]}>
-              <View style={styles.alertList}>
-                {demoProcurementAlerts.map((alert) => (
-                  <Pressable
-                    key={alert.id}
-                    style={[styles.alertCard, selectedAlertId === alert.id && styles.alertCardActive]}
-                    onPress={() => setSelectedAlertId(alert.id)}
-                  >
-                    <View style={styles.alertRow}>
-                      <Text style={styles.alertTitle}>{alert.title}</Text>
-                      <Text style={[styles.priorityPill, alert.priority === 'Critical' ? styles.priorityCritical : alert.priority === 'High' ? styles.priorityHigh : styles.priorityMedium]}>{alert.priority}</Text>
-                    </View>
-                    <Text style={styles.alertType}>{alert.type}</Text>
-                    <Text style={styles.alertSnippet}>{alert.happened}</Text>
-                  </Pressable>
-                ))}
-              </View>
+          <TextInput
+            style={styles.input}
+            placeholder={
+              activeCharacter === 'TJ'
+                ? 'Tell TJ what you need help with...'
+                : 'Tell Arlane what is weighing on you...'
+            }
+            placeholderTextColor="#9ca3af"
+            value={input}
+            onChangeText={setInput}
+          />
 
-              <View style={styles.alertDetail}>
-                {demoProcurementAlerts.filter((x) => x.id === selectedAlertId).map((alert) => (
-                  <View key={alert.id}>
-                    <Text style={styles.alertDetailTitle}>{alert.title}</Text>
-                    <Text style={styles.text}>1. What happened: {alert.happened}</Text>
-                    <Text style={styles.text}>2. What is driving it: {alert.drivingIt}</Text>
-                    <Text style={styles.text}>3. Financial impact: {alert.financialImpact}</Text>
-                    <Text style={styles.text}>4. Root cause: {alert.rootCause}</Text>
-                    <Text style={styles.label}>5. Related entities</Text>
-                    <Text style={styles.text}>Supplier: {alert.related.supplier}</Text>
-                    <Text style={styles.text}>PO: {alert.related.po}</Text>
-                    <Text style={styles.text}>Category: {alert.related.category}</Text>
-                    <Text style={styles.text}>Contract: {alert.related.contract}</Text>
-                    <Text style={styles.text}>Buyer: {alert.related.buyer}</Text>
-                    <Text style={styles.text}>Item: {alert.related.item}</Text>
-                    <Text style={styles.label}>6. Evidence behind the alert</Text>
-                    {alert.evidence.map((line) => <Text key={`${alert.id}-${line}`} style={styles.text}>• {line}</Text>)}
-                    <Text style={styles.text}>7. Recommended corrective action: {alert.recommendedAction}</Text>
-                    <Text style={styles.text}>8. Priority level: {alert.priority}</Text>
-                    <Text style={styles.text}>9. Owner / responsible role: {alert.owner}</Text>
-                    <Text style={styles.text}>10. Next best action: {alert.nextBestAction}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </Section>
-        )}
+          <Pressable style={styles.button} onPress={handleSend}>
+            <Text style={styles.buttonText}>Send</Text>
+          </Pressable>
+        </View>
 
-        {page === 'Preferences' && (
-          <Section title="Preferences">
-            <Field label="Favorite food order" value={preferences?.favoriteFoodOrder || ''} onChange={(favoriteFoodOrder) => setPreferences((p) => ({ ...p, favoriteFoodOrder }))} />
-            <Field label="Preferred pizza vendor" value={preferences?.preferredPizzaVendor || ''} onChange={(preferredPizzaVendor) => setPreferences((p) => ({ ...p, preferredPizzaVendor }))} />
-            <Field label="Favorite grocery items (comma-separated)" value={(preferences?.favoriteGroceryItems || []).join(', ')} onChange={(txt) => setPreferences((p) => ({ ...p, favoriteGroceryItems: txt.split(',').map((x) => x.trim()).filter(Boolean) }))} />
-            <Field label="Important contacts (comma-separated)" value={(preferences?.importantContacts || []).join(', ')} onChange={(txt) => setPreferences((p) => ({ ...p, importantContacts: txt.split(',').map((x) => x.trim()).filter(Boolean) }))} />
-            <Field label="Default reminder time" value={preferences?.defaultReminderTime || ''} onChange={(defaultReminderTime) => setPreferences((p) => ({ ...p, defaultReminderTime }))} />
-            <Field label="Tone preference" value={preferences?.tonePreference || ''} onChange={(tonePreference) => setPreferences((p) => ({ ...p, tonePreference }))} />
-            <Pressable style={styles.cta} onPress={savePrefs}><Text style={styles.ctaTxt}>Save preferences</Text></Pressable>
-          </Section>
-        )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>What Steady Does</Text>
 
-        {page === 'Beta' && (
-          <Section title="Join Beta">
-            <Text style={styles.text}>Built for real life. Dedicated to the common man.</Text>
-            <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#9ca3af" value={betaEmail} onChangeText={setBetaEmail} />
-            <Pressable style={styles.cta} onPress={joinBeta}><Text style={styles.ctaTxt}>Join Beta</Text></Pressable>
-            <Text style={styles.text}>Beta signups this session: {betaList.length}</Text>
-          </Section>
-        )}
+          <Text style={styles.feature}>• Helps organize everyday life</Text>
+          <Text style={styles.feature}>• Reduces stress and overwhelm</Text>
+          <Text style={styles.feature}>• Assists with reminders and planning</Text>
+          <Text style={styles.feature}>• Helps hard-working people navigate life easier</Text>
+          <Text style={styles.feature}>• Provides grounded emotional support</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Privacy & Safety</Text>
+
+          <Text style={styles.footerText}>
+            Steady is not therapy, healthcare, or crisis intervention.
+          </Text>
+
+          <Text style={styles.footerText}>
+            Steady exists to support, organize, and simplify life.
+          </Text>
+        </View>
       </ScrollView>
-
-      {loading ? <ActivityIndicator style={{ position: 'absolute', right: 16, top: 16 }} color="#fb923c" /> : null}
-
-      <View style={styles.nav}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {pages.map((item) => (
-            <Pressable key={item} style={[styles.navBtn, item === page && styles.navActive]} onPress={() => setPage(item)}>
-              <Text style={[styles.navTxt, item === page && styles.navTxtActive]}>{item}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
     </SafeAreaView>
   );
 }
 
-function Landing({ openChat, openTasks, sendCommand, isMobile, setInput }) {
-  const [heroInput, setHeroInput] = useState('');
-  const [heroConversation, setHeroConversation] = useState([]);
-  const [exampleIndex, setExampleIndex] = useState(0);
-  const cursorOpacity = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0.35)).current;
-
-  const examples = [
-    'Order my usual pizza',
-    'Remind me to pay rent Friday',
-    'Draft a text to my wife',
-    'Add oil change to my calendar'
-  ];
-
-  useEffect(() => {
-    const rotator = setInterval(() => setExampleIndex((prev) => (prev + 1) % examples.length), 2600);
-    return () => clearInterval(rotator);
-  }, []);
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(cursorOpacity, { toValue: 0.15, duration: 450, useNativeDriver: true }),
-        Animated.timing(cursorOpacity, { toValue: 1, duration: 450, useNativeDriver: true })
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 0.78, duration: 1600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0.35, duration: 1600, easing: Easing.inOut(Easing.ease), useNativeDriver: true })
-      ])
-    ).start();
-  }, [cursorOpacity, glowAnim]);
-
-  function demoFallback(userInput) {
-    const low = userInput.toLowerCase();
-    if (low.includes('pizza') || low.includes('order')) return 'Pepperoni again? Bold strategy. Want me to prep the order?';
-    if (low.includes('rent') || low.includes('remind')) return 'Reminder loaded. Future-you can thank current-you on Friday.';
-    if (low.includes('text') || low.includes('wife')) return 'Draft ready: “Running late, be there soon.” Want me to queue edits?';
-    if (low.includes('calendar') || low.includes('oil')) return 'Got it. Oil change draft added to your pending calendar tasks.';
-    return 'I got it. Say it your way and I will translate the chaos into a plan.';
-  }
-
-  async function handleHeroSubmit(rawInput) {
-    const userInput = rawInput.trim();
-    if (!userInput) return;
-    setHeroConversation((prev) => [...prev, `You: ${userInput}`]);
-
-    try {
-      await sendCommand(userInput);
-      setHeroConversation((prev) => [...prev, 'TJ: Got it. Dropping this into your active task flow now.']);
-    } catch (_error) {
-      setHeroConversation((prev) => [...prev, `TJ: ${demoFallback(userInput)}`]);
-    }
-
-    setInput(userInput);
-    setHeroInput('');
-    setTimeout(() => openChat(), 300);
-  }
-
-  return (
-    <>
-      <Section title="Hero">
-        <View style={[styles.heroSplit, isMobile && styles.heroSplitMobile]}>
-          <View style={styles.heroLeft}>
-            <Text style={styles.hero}>TJ - The Lazy Man&apos;s OS</Text>
-            <Text style={styles.kicker}>Talk normal. TJ handles the annoying part.</Text>
-            <Text style={styles.text}>Talk normal. TJ handles the annoying part.</Text>
-            <View style={styles.row}>
-              <Pressable style={styles.cta} onPress={openChat}><Text style={styles.ctaTxt}>Start Talking to TJ</Text></Pressable>
-              <Pressable style={styles.alt} onPress={() => setHeroInput(examples[exampleIndex])}><Text style={styles.ctaTxt}>Watch Demo</Text></Pressable>
-            </View>
-
-            <View style={styles.promptCard}>
-              <Text style={styles.label}>What do you need handled?</Text>
-              <TextInput
-                style={styles.input}
-                value={heroInput}
-                onChangeText={setHeroInput}
-                placeholder={examples[exampleIndex]}
-                placeholderTextColor="#9ca3af"
-              />
-              <View style={styles.row}>
-                <Pressable style={styles.cta} onPress={() => handleHeroSubmit(heroInput)}><Text style={styles.ctaTxt}>Send to TJ</Text></Pressable>
-                <Text style={styles.rotator}>Try: {examples[exampleIndex]}<Animated.Text style={{ opacity: cursorOpacity }}>|</Animated.Text></Text>
-              </View>
-              {heroConversation.slice(-2).map((line, idx) => <Text key={`${line}-${idx}`} style={styles.text}>{line}</Text>)}
-            </View>
-          </View>
-
-          <Animated.View style={[styles.heroRight, { opacity: glowAnim }]}> 
-            <View style={styles.robotCard}>
-              <Text style={styles.robotTitle}>TJ</Text>
-              <Text style={styles.text}>Rugged, sarcastic sidekick with built-in southern flavor.</Text>
-              <Text style={styles.text}>Orders food. Schedules life. Handles the stuff you do not want to.</Text>
-              <Text style={styles.robotQuote}>“I got it.”</Text>
-              <Text style={styles.smoke}>~ subtle smoke + neon flicker ambience ~</Text>
-            </View>
-          </Animated.View>
-        </View>
-      </Section>
-
-      <Section title="What TJ Does">
-        <View style={styles.featureGrid}>
-          {[
-            ['🍔', 'ORDER IT.', 'Food, groceries, and whatever you are craving.'],
-            ['📅', 'SCHEDULE IT.', 'Appointments, reminders, and calendar wrangling.'],
-            ['🚗', 'HANDLE IT.', 'Errands, rides, and life-admin tasks.'],
-            ['💰', 'SAVE TIME.', 'Less busywork. More time for real life.'],
-            ['😏', 'LAUGH MORE.', 'Dry humor, honest answers, no fake hype.']
-          ].map(([icon, title, detail]) => (
-            <View key={title} style={styles.featureCard}>
-              <Text style={styles.featureIcon}>{icon}</Text>
-              <Text style={styles.featureTitle}>{title}</Text>
-              <Text style={styles.featureText}>{detail}</Text>
-            </View>
-          ))}
-        </View>
-      </Section>
-
-      <Section title="Just Talk to TJ">
-        <Text style={styles.text}>Say it normal. TJ parses intent, drafts a task, and asks for confirmation before anything risky.</Text>
-      </Section>
-
-      <Section title="Built Different">
-        {[
-          '✓ Honest. Not here to sugarcoat it.',
-          '✓ Sarcastic. Because life is ridiculous.',
-          '✓ Loyal. TJ is in your corner.',
-          '✓ Private. Your data stays yours.',
-          '✓ Always improving. TJ gets better every day.'
-        ].map((x) => <Text key={x} style={styles.text}>{x}</Text>)}
-        <View style={styles.row}>
-          <Pressable style={styles.cta} onPress={openTasks}><Text style={styles.ctaTxt}>View Tasks</Text></Pressable>
-          <Pressable style={styles.alt}><Text style={styles.ctaTxt}>Join Beta</Text></Pressable>
-        </View>
-      </Section>
-
-      <Section title="Footer">
-        <Text style={styles.text}>TJ is an AI assistant, not a human. No therapy roleplay. No manipulative behavior. Just useful help.</Text>
-        <Pressable onPress={() => Linking.openURL('https://www.dominos.com')}><Text style={[styles.text, { color: '#fb923c' }]}>Open Domino&apos;s demo link</Text></Pressable>
-      </Section>
-    </>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title.toUpperCase()}</Text>
-      {children}
-    </View>
-  );
-}
-
-function Field({ label, value, onChange }) {
-  return (
-    <>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} value={value} onChangeText={onChange} placeholderTextColor="#9ca3af" />
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#090705' },
-  header: { borderBottomWidth: 1, borderBottomColor: '#42210f', padding: 14, backgroundColor: '#0d0906' },
-  brand: { color: '#f6c089', fontWeight: '700', fontSize: 18 },
-  tagline: { color: '#d4d4d8', marginTop: 4 },
-  body: { paddingHorizontal: 10 },
-  section: { backgroundColor: '#15100d', borderColor: '#4a2817', borderWidth: 1, borderRadius: 14, padding: 12, marginVertical: 6 },
-  sectionTitle: { color: '#d6a977', fontSize: 11, letterSpacing: 1, marginBottom: 8 },
-  heroSplit: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
-  heroSplitMobile: { flexDirection: 'column' },
-  heroLeft: { flex: 1.2 },
-  heroRight: { flex: 1, justifyContent: 'center' },
-  hero: { color: '#fff7ed', fontSize: 30, fontWeight: '800', marginBottom: 8 },
-  kicker: { color: '#fb923c', fontSize: 26, fontStyle: 'italic', marginBottom: 8 },
-  promptCard: { borderWidth: 1, borderColor: '#6f3b21', borderRadius: 12, padding: 10, marginTop: 10, backgroundColor: '#100c09' },
-  rotator: { color: '#fdba74', flex: 1, paddingTop: 9, paddingLeft: 4, fontSize: 12 },
-  robotCard: { borderWidth: 1, borderColor: '#7c2d12', backgroundColor: '#26150d', borderRadius: 14, padding: 12, minHeight: 215 },
-  robotTitle: { color: '#fb923c', fontSize: 22, fontWeight: '800', marginBottom: 6 },
-  robotQuote: { color: '#fed7aa', fontSize: 22, fontWeight: '700', marginTop: 10 },
-  smoke: { color: '#a1a1aa', fontSize: 12, marginTop: 8, fontStyle: 'italic' },
-  text: { color: '#f1e4d7', marginBottom: 6 },
-  featureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  featureCard: { width: '48%', borderWidth: 1, borderColor: '#59301d', borderRadius: 12, padding: 10, backgroundColor: '#110d0a' },
-  featureIcon: { fontSize: 20, marginBottom: 4 },
-  featureTitle: { color: '#f0b57a', fontWeight: '800', marginBottom: 4 },
-  featureText: { color: '#dcc3ab', fontSize: 12 },
-  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6 },
-  cta: { backgroundColor: '#e09a57', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
-  alt: { backgroundColor: '#3f2b20', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
-  ctaTxt: { color: 'white', fontWeight: '700' },
-  chatBox: { borderWidth: 1, borderColor: '#3f3f46', borderRadius: 10, padding: 10, backgroundColor: '#09090b', maxHeight: 280 },
-  msg: { marginBottom: 8 },
-  user: { color: '#fdba74' },
-  assistant: { color: '#d4d4d8' },
-  examplesWrap: { marginBottom: 8 },
-  exampleBtn: { padding: 8, borderWidth: 1, borderColor: '#3f3f46', borderRadius: 10, marginBottom: 6 },
-  exampleTxt: { color: '#d4d4d8', fontSize: 12 },
-  card: { borderWidth: 1, borderColor: '#3f3f46', borderRadius: 10, padding: 10, marginBottom: 8 },
-  cardTitle: { color: '#fff', fontWeight: '700' },
-  label: { color: '#fed7aa', fontSize: 12, marginTop: 6, marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#52525b', borderRadius: 10, color: '#fff', padding: 10, marginBottom: 8 },
-  nav: { position: 'absolute', left: 8, right: 8, bottom: 8, backgroundColor: '#18181b', borderWidth: 1, borderColor: '#3f3f46', borderRadius: 12, padding: 8 },
-  navBtn: { borderWidth: 1, borderColor: '#3f3f46', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, marginRight: 6 },
-  navActive: { borderColor: '#fb923c', backgroundColor: '#431407' },
-  navTxt: { color: '#a1a1aa', fontSize: 12 },
-  navTxtActive: { color: '#fdba74' },
-  alertLayout: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  alertLayoutMobile: { flexDirection: 'column' },
-  alertList: { flex: 1.05 },
-  alertDetail: { flex: 1.2, borderWidth: 1, borderColor: '#5a3020', borderRadius: 12, backgroundColor: '#120d0a', padding: 10 },
-  alertCard: { borderWidth: 1, borderColor: '#4d2a1b', borderRadius: 10, padding: 10, marginBottom: 8, backgroundColor: '#0f0b08' },
-  alertCardActive: { borderColor: '#fb923c', backgroundColor: '#25140c' },
-  alertRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' },
-  alertTitle: { color: '#fff7ed', fontWeight: '700', flex: 1, marginBottom: 4 },
-  alertType: { color: '#fdba74', fontSize: 12, marginBottom: 4 },
-  alertSnippet: { color: '#d6d3d1', fontSize: 12 },
-  priorityPill: { overflow: 'hidden', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, color: '#fff', fontSize: 10, fontWeight: '700' },
-  priorityCritical: { backgroundColor: '#991b1b' },
-  priorityHigh: { backgroundColor: '#b45309' },
-  priorityMedium: { backgroundColor: '#1d4ed8' },
-  alertDetailTitle: { color: '#fb923c', fontSize: 18, fontWeight: '700', marginBottom: 8 }
+  safe: {
+    flex: 1,
+    backgroundColor: '#090705'
+  },
+  container: {
+    padding: 16,
+    paddingBottom: 60
+  },
+  heroCard: {
+    borderWidth: 1,
+    borderColor: '#5a3020',
+    borderRadius: 18,
+    padding: 18,
+    backgroundColor: '#120d0a',
+    marginBottom: 16
+  },
+  brand: {
+    color: '#fb923c',
+    fontSize: 34,
+    fontWeight: '900'
+  },
+  tagline: {
+    color: '#fff7ed',
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 4
+  },
+  description: {
+    color: '#d6d3d1',
+    marginTop: 10,
+    lineHeight: 22
+  },
+  section: {
+    borderWidth: 1,
+    borderColor: '#4d2a1b',
+    borderRadius: 16,
+    backgroundColor: '#120d0a',
+    padding: 16,
+    marginBottom: 14
+  },
+  sectionTitle: {
+    color: '#fff7ed',
+    fontWeight: '800',
+    fontSize: 20,
+    marginBottom: 10
+  },
+  sectionDescription: {
+    color: '#d6d3d1',
+    lineHeight: 20,
+    marginBottom: 12
+  },
+  chatBox: {
+    borderWidth: 1,
+    borderColor: '#59301d',
+    borderRadius: 14,
+    backgroundColor: '#0f0b08',
+    padding: 12,
+    minHeight: 220,
+    marginBottom: 12
+  },
+  message: {
+    marginBottom: 10,
+    lineHeight: 20
+  },
+  userMessage: {
+    color: '#fdba74'
+  },
+  assistantMessage: {
+    color: '#e7e5e4'
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#5a3020',
+    borderRadius: 12,
+    color: '#fff',
+    padding: 12,
+    marginBottom: 12
+  },
+  button: {
+    backgroundColor: '#ea580c',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center'
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '800'
+  },
+  feature: {
+    color: '#d6d3d1',
+    marginBottom: 10,
+    lineHeight: 20
+  },
+  footerText: {
+    color: '#a8a29e',
+    lineHeight: 20,
+    marginBottom: 8
+  }
 });
