@@ -1,12 +1,27 @@
 const app = require('./src/app');
 const { connectDatabase } = require('./src/db');
 
-const port = Number(process.env.PORT || 4000);
+const PORT = Number(process.env.PORT || 4000);
+const HOST = '0.0.0.0';
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+});
 
 async function start() {
-  await connectDatabase();
-  app.listen(port, () => {
-    console.log(`Steady TJ API listening on http://localhost:${port}`);
+  try {
+    await connectDatabase();
+  } catch (error) {
+    console.error('Database connection failed, continuing without database:', error.message);
+  }
+
+  app.listen(PORT, HOST, () => {
+    console.log('Server started');
+    console.log(`Listening on PORT ${PORT}`);
   });
 }
 
