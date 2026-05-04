@@ -2,16 +2,56 @@
 /**
  * Cross-platform Expo start script.
  *
- * On macOS: runs `expo start` (iOS + Android + Web).
- * On Windows / Linux: runs `expo start --android` to skip the Xcode /
- * App-Store prerequisite check that only works on macOS.
+ * Default behavior:
+ * - macOS: `expo start` (iOS + Android + Web)
+ * - Linux/Windows with Android SDK available: `expo start --android`
+ * - Linux/Windows without Android SDK (e.g., cloud hosts like Render):
+ *   `expo start --web`
+ *
+ * You can override with EXPO_START_TARGET=default|android|ios|web.
  */
 
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const os = require('os');
 
-const isMac = os.platform() === 'darwin';
-const command = isMac ? 'expo start' : 'expo start --android';
+function hasCommand(cmd, args = ['--version']) {
+  const result = spawnSync(cmd, args, { stdio: 'ignore' });
+  return result.status === 0 && !result.error;
+}
+
+function resolveStartCommand() {
+  const override = (process.env.EXPO_START_TARGET || '').trim().toLowerCase();
+  if (override) {
+    switch (override) {
+      case 'default':
+        return 'expo start';
+      case 'android':
+        return 'expo start --android';
+      case 'ios':
+        return 'expo start --ios';
+      case 'web':
+        return 'expo start --web';
+      default:
+        console.warn(
+          `[start] Unknown EXPO_START_TARGET="${override}". Falling back to auto-detection.`
+        );
+    }
+  }
+
+  const isMac = os.platform() === 'darwin';
+  if (isMac) return 'expo start';
+
+  // Cloud Linux environments often do not have Android SDK/adb installed.
+  // If adb is unavailable, prefer web to avoid startup failure.
+  if (!hasCommand('adb', ['version'])) {
+    console.log('[start] Android SDK tools (adb) not found. Using web target.');
+    return 'expo start --web';
+  }
+
+  return 'expo start --android';
+}
+
+const command = resolveStartCommand();
 
 console.log(`[start] Running: ${command}`);
 try {
