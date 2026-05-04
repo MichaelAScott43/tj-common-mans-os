@@ -18,12 +18,25 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'steady-tj-api', timestamp: new Date().toISOString() });
 });
 
+
+app.get('/', (_req, res) => {
+  res.status(200).send('Steady is running');
+});
+
 app.use('/api/tj', tjRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/conversations', conversationRoutes);
 
-app.use((error, _req, res, _next) => {
-  console.error(error);
+app.use((req, res, next) => {
+  if (!res.headersSent) {
+    console.error(`Route not found: ${req.method} ${req.originalUrl}`);
+    return res.status(404).json({ error: 'Route not found' });
+  }
+  return next();
+});
+
+app.use((error, req, res, _next) => {
+  console.error(`Request failed: ${req.method} ${req.originalUrl}`, error);
   res.status(500).json({ error: 'Internal server error' });
 });
 

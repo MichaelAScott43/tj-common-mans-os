@@ -2,17 +2,17 @@
   "name": "steady",
   "version": "2.0.0",
   "description": "Steady Life Operations OS mobile-first app.",
-  "main": "App.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node scripts/start.js",
+    "start": "node server.js",
     "start:ios": "expo start --ios",
     "start:android": "expo start --android",
     "start:web": "expo start --web",
-    "server": "node server/index.js",
+    "server": "node server.js",
     "dev": "npm start",
     "build": "expo export --platform web",
     "build:frontend": "npm run build",
-    "server:start": "node server/index.js"
+    "server:start": "node server.js"
   },
   "dependencies": {
     "expo": "~51.0.0",
