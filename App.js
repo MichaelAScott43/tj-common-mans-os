@@ -15,6 +15,13 @@ import {
   arlaneWelcomeMessages
 } from './src/data/tjWelcomeMessages';
 
+const voiceExamples = [
+  'Remind me tomorrow at 3PM to pick up my prescription.',
+  'Schedule a dentist appointment for next Friday morning.',
+  'I need help organizing my bills this week.',
+  'Remind me to call mom after work.'
+];
+
 export default function App() {
   const [activeCharacter, setActiveCharacter] = useState('TJ');
   const [messages, setMessages] = useState([
@@ -24,6 +31,10 @@ export default function App() {
     }
   ]);
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState(
+    'Voice assistant ready. Tap the microphone to simulate voice capture.'
+  );
 
   function switchCharacter(character) {
     setActiveCharacter(character);
@@ -42,10 +53,28 @@ export default function App() {
     ]);
   }
 
-  function handleSend() {
-    if (!input.trim()) return;
+  function buildAssistantReply(userMessage) {
+    const lower = userMessage.toLowerCase();
 
-    const userMessage = input.trim();
+    if (
+      lower.includes('remind') ||
+      lower.includes('appointment') ||
+      lower.includes('schedule')
+    ) {
+      return 'I captured that request and marked it as a reminder workflow. Calendar syncing and notifications are the next step.';
+    }
+
+    return activeCharacter === 'TJ'
+      ? 'Got it. Let me help you figure this out one step at a time.'
+      : 'Take a breath first. We do not need to solve everything at once.';
+  }
+
+  function handleSend(customMessage) {
+    const messageToSend = customMessage || input;
+
+    if (!messageToSend.trim()) return;
+
+    const userMessage = messageToSend.trim();
 
     setMessages((prev) => [
       ...prev,
@@ -55,14 +84,25 @@ export default function App() {
       },
       {
         role: 'assistant',
-        text:
-          activeCharacter === 'TJ'
-            ? 'Got it. Let me help you figure this out one step at a time.'
-            : 'Take a breath first. We do not need to solve everything at once.'
+        text: buildAssistantReply(userMessage)
       }
     ]);
 
     setInput('');
+  }
+
+  function handleVoiceCapture() {
+    setIsListening(true);
+    setVoiceStatus('Listening for voice command...');
+
+    setTimeout(() => {
+      const simulatedTranscript =
+        voiceExamples[Math.floor(Math.random() * voiceExamples.length)];
+
+      setInput(simulatedTranscript);
+      setVoiceStatus(`Voice captured: "${simulatedTranscript}"`);
+      setIsListening(false);
+    }, 1500);
   }
 
   return (
@@ -94,6 +134,23 @@ export default function App() {
               : 'Arlane provides grounding support, encouragement, and emotional decompression when life feels heavy.'}
           </Text>
 
+          <View style={styles.voiceCard}>
+            <Text style={styles.voiceTitle}>Voice Assistant Beta</Text>
+            <Text style={styles.voiceDescription}>{voiceStatus}</Text>
+
+            <Pressable
+              style={[
+                styles.voiceButton,
+                isListening ? styles.voiceButtonActive : null
+              ]}
+              onPress={handleVoiceCapture}
+            >
+              <Text style={styles.voiceButtonText}>
+                {isListening ? 'Listening...' : '🎙 Start Voice Capture'}
+              </Text>
+            </Pressable>
+          </View>
+
           <View style={styles.chatBox}>
             {messages.slice(-10).map((msg, idx) => (
               <Text
@@ -121,21 +178,22 @@ export default function App() {
             placeholderTextColor="#9ca3af"
             value={input}
             onChangeText={setInput}
+            multiline
           />
 
-          <Pressable style={styles.button} onPress={handleSend}>
+          <Pressable style={styles.button} onPress={() => handleSend()}>
             <Text style={styles.buttonText}>Send</Text>
           </Pressable>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What Steady Does</Text>
+          <Text style={styles.sectionTitle}>Planned Smart Features</Text>
 
-          <Text style={styles.feature}>• Helps organize everyday life</Text>
-          <Text style={styles.feature}>• Reduces stress and overwhelm</Text>
-          <Text style={styles.feature}>• Assists with reminders and planning</Text>
-          <Text style={styles.feature}>• Helps hard-working people navigate life easier</Text>
-          <Text style={styles.feature}>• Provides grounded emotional support</Text>
+          <Text style={styles.feature}>• Voice-to-reminder workflows</Text>
+          <Text style={styles.feature}>• Calendar and appointment support</Text>
+          <Text style={styles.feature}>• AI life organization assistant</Text>
+          <Text style={styles.feature}>• Overwhelm reduction tools</Text>
+          <Text style={styles.feature}>• Emotional support mode with Arlane</Text>
         </View>
 
         <View style={styles.section}>
@@ -206,6 +264,38 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 12
   },
+  voiceCard: {
+    borderWidth: 1,
+    borderColor: '#7c2d12',
+    borderRadius: 14,
+    padding: 14,
+    backgroundColor: '#1c0f09',
+    marginBottom: 14
+  },
+  voiceTitle: {
+    color: '#fdba74',
+    fontWeight: '800',
+    fontSize: 18,
+    marginBottom: 8
+  },
+  voiceDescription: {
+    color: '#d6d3d1',
+    lineHeight: 20,
+    marginBottom: 12
+  },
+  voiceButton: {
+    backgroundColor: '#c2410c',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center'
+  },
+  voiceButtonActive: {
+    backgroundColor: '#ea580c'
+  },
+  voiceButtonText: {
+    color: '#fff',
+    fontWeight: '800'
+  },
   chatBox: {
     borderWidth: 1,
     borderColor: '#59301d',
@@ -231,7 +321,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     color: '#fff',
     padding: 12,
-    marginBottom: 12
+    marginBottom: 12,
+    minHeight: 90,
+    textAlignVertical: 'top'
   },
   button: {
     backgroundColor: '#ea580c',
