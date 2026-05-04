@@ -1,14 +1,17 @@
 services:
   - type: web
-    name: tj-common-mans-os-api
+    name: steady-common-man-os-api
     env: node
     plan: free
+    rootDir: .
     buildCommand: npm install
     startCommand: npm run server
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: PORT
+        value: 4000
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB
@@ -17,8 +20,8 @@ services:
         sync: false
 
   - type: static
-    name: tj-common-mans-os-web
-    buildCommand: npm install && npm run build
+    name: steady-common-man-os-web
+    buildCommand: npm install && npm run build:frontend
     staticPublishPath: dist
     envVars:
       - key: NODE_VERSION
@@ -26,5 +29,5 @@ services:
       - key: EXPO_PUBLIC_API_BASE_URL
         fromService:
           type: web
-          name: tj-common-mans-os-api
+          name: steady-common-man-os-api
           envVarKey: RENDER_EXTERNAL_URL

@@ -1,5 +1,7 @@
 const express = require('express');
 const tjRoutes = require('./routes/tjRoutes');
+const reminderRoutes = require('./routes/reminderRoutes');
+const conversationRoutes = require('./routes/conversationRoutes');
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/tj', tjRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 app.use((error, _req, res, _next) => {
   console.error(error);
