@@ -11,7 +11,8 @@
     "server": "node server/index.js",
     "dev": "npm start",
     "build": "expo export --platform web",
-    "build:frontend": "npm run build"
+    "build:frontend": "npm run build",
+    "server:start": "node server/index.js"
   },
   "dependencies": {
     "expo": "~51.0.0",
@@ -20,7 +21,9 @@
     "react-native": "0.74.5",
     "express": "^4.21.2",
     "mongoose": "^8.19.1",
-    "openai": "^4.77.0"
+    "openai": "^4.77.0",
+    "expo-notifications": "~0.28.17",
+    "expo-speech-recognition": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0"
