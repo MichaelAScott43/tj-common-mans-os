@@ -6,12 +6,6 @@ import * as Speech from 'expo-speech-recognition';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
-function personalityReply(character, text) {
-  if (character === 'Arlane') return 'You are doing better than you feel right now. Let us keep this simple together.';
-  if (/remind|schedule|appointment|task/i.test(text)) return 'I can turn that into a reminder and keep your day on track.';
-  return 'Got it. I will help you organize this one step at a time.';
-}
-
 export default function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [character, setCharacter] = useState('TJ');
@@ -43,9 +37,23 @@ export default function App() {
     const text = raw || input;
     if (!text.trim()) return;
     const user = { role: 'user', text };
-    const assistant = { role: 'assistant', text: personalityReply(character, text), character };
-    setMessages((m) => [...m, user, assistant]);
+    setMessages((m) => [...m, user]);
     setInput('');
+    let assistantReply = 'Sorry, I hit a snag. Please try again in a second.';
+    try {
+      const chatRes = await fetch(`${API_BASE_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, personality: character })
+      });
+      if (chatRes.ok) {
+        const chatJson = await chatRes.json();
+        assistantReply = chatJson.reply || assistantReply;
+      }
+    } catch (e) {}
+
+    const assistant = { role: 'assistant', text: assistantReply, character };
+    setMessages((m) => [...m, assistant]);
     await fetch(`${API_BASE_URL}/api/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(user) });
     await fetch(`${API_BASE_URL}/api/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(assistant) });
     if (/remind|schedule|appointment|task/i.test(text)) await createReminder(text);
