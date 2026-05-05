@@ -20,10 +20,6 @@ app.get('/api/health', (_req, res) => {
 });
 
 
-app.get('/', (_req, res) => {
-  res.status(200).send('Steady is running');
-});
-
 app.use('/api/tj', tjRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/conversations', conversationRoutes);
@@ -56,10 +52,14 @@ app.post('/api/chat', (req, res) => {
   return res.json({ reply });
 });
 
-app.use(express.static('dist'));
-app.get('*', (_req, res) => {
-  res.sendFile(path.resolve('dist/index.html'));
-});
+app.use(express.static(path.resolve('public')));
+
+app.get('/', (_req, res) => res.sendFile(path.resolve('public/index.html')));
+app.get('/dashboard', (_req, res) => res.sendFile(path.resolve('public/dashboard.html')));
+app.get('/chat', (_req, res) => res.sendFile(path.resolve('public/chat.html')));
+app.get('/resume', (_req, res) => res.sendFile(path.resolve('public/resume.html')));
+app.get('/funding', (_req, res) => res.sendFile(path.resolve('public/funding.html')));
+app.get('/life', (_req, res) => res.sendFile(path.resolve('public/life.html')));
 
 app.use((req, res, next) => {
   if (!res.headersSent) {
