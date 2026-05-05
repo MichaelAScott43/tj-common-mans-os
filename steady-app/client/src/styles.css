@@ -2,13 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-* { font-family: 'Inter', sans-serif; }
-.btn { @apply px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition shadow; }
-.btn-active { @apply bg-accent hover:bg-purple-500 shadow-glow; }
-.input { @apply w-full rounded-xl px-3 py-2 bg-black/40 border border-white/20 outline-none focus:border-glow; }
-.bubble { @apply mb-2 px-3 py-2 rounded-xl max-w-[90%]; }
-.bubble.user { @apply bg-accent ml-auto; }
-.bubble.bot { @apply bg-white/10; }
-.card { @apply bg-white/10 rounded-2xl px-5 py-3 border border-white/20; }
-.animate-fade { animation: fade 1.2s ease both; }
-@keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
+body { margin: 0; background: #0a0a0b; color: #d7d8de; font-family: Inter, sans-serif; }
+.calm-shell { min-height: 100vh; background: #0a0a0b; padding: 24px; max-width: 900px; margin: 0 auto; }
+h1 { color: #f2f4f8; margin-bottom: 4px; }
+.subtitle { color: #9ea3b8; margin-bottom: 16px; }
+.room-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; }
+.room-card { display:block; background:#15161a; border:1px solid #2b2c31; border-radius:14px; padding:14px; color:#e8e9ef; text-decoration:none; }
+.chat-area { background: #111216; border:1px solid #2b2c31; border-radius: 14px; min-height: 360px; padding: 12px; overflow-y: auto; }
+.chat-bubble { background:#1a1c22; border-radius:12px; padding:10px; margin-bottom:10px; }
+.composer { margin-top: 12px; display:flex; gap:8px; }
+.input { flex:1; border-radius:12px; border:1px solid #3b3e47; background:#12141a; color:#f1f2f6; padding:10px; }
+.btn { border-radius: 12px; padding: 10px 16px; background:#2b2e3a; color:#eceff8; border:none; }
+.btn-active { background: #3f4f7a; }
+.warning-box { background:#3a0f14; border:1px solid #a74b57; color:#ffd7dc; border-radius:10px; padding:10px; margin-bottom:10px; }
+.report { background:none; border:none; color:#bfc6df; text-decoration:underline; cursor:pointer; padding:0; }
