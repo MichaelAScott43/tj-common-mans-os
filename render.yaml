@@ -1,33 +1,11 @@
 services:
   - type: web
-    name: steady-common-man-os-api
+    name: steady
     env: node
     plan: free
-    rootDir: .
-    buildCommand: npm install
-    startCommand: npm run server
-    healthCheckPath: /api/health
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
+    autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: 20
-      - key: PORT
-        value: 4000
-      - key: MONGODB_URI
-        sync: false
-      - key: MONGODB_DB
-        value: steady
-      - key: OPENAI_API_KEY
-        sync: false
-
-  - type: static
-    name: steady-common-man-os-web
-    buildCommand: npm install && npx expo install --non-interactive react-native-web react-dom @expo/metro-runtime && npm run build:frontend
-    staticPublishPath: dist
-    envVars:
-      - key: NODE_VERSION
-        value: 20
-      - key: EXPO_PUBLIC_API_BASE_URL
-        fromService:
-          type: web
-          name: steady-common-man-os-api
-          envVarKey: RENDER_EXTERNAL_URL

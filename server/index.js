@@ -1,31 +1,32 @@
-const app = require('./src/app');
-const { connectDatabase } = require('./src/db');
+const express = require('express');
+const path = require('path');
 
-const PORT = Number(process.env.PORT || 4000);
-const HOST = '0.0.0.0';
+const app = express();
+const PORT = process.env.PORT || 10000;
 
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled promise rejection:', reason);
+app.use(express.json());
+
+let tasks = [{ id: 1, title: 'Submit rent assistance form', priority: 'High', done: false }];
+let goals = [{ id: 1, title: 'Emergency fund', progress: 45 }];
+
+app.get('/api/health', (_req, res) => res.json({ ok: true, app: 'Steady', poweredBy: 'TJ' }));
+app.get('/api/tasks', (_req, res) => res.json(tasks));
+app.get('/api/goals', (_req, res) => res.json(goals));
+
+app.post('/api/tasks', (req, res) => {
+  const task = { id: Date.now(), ...req.body };
+  tasks.push(task);
+  res.status(201).json(task);
 });
 
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
+app.post('/api/goals', (req, res) => {
+  const goal = { id: Date.now(), ...req.body };
+  goals.push(goal);
+  res.status(201).json(goal);
 });
 
-async function start() {
-  try {
-    await connectDatabase();
-  } catch (error) {
-    console.error('Database connection failed, continuing without database:', error.message);
-  }
+const distPath = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(distPath));
+app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
 
-  app.listen(PORT, HOST, () => {
-    console.log('Server started');
-    console.log(`Listening on PORT ${PORT}`);
-  });
-}
-
-start().catch((error) => {
-  console.error('Failed to start server', error);
-  process.exit(1);
-});
+app.listen(PORT, () => console.log(`Steady server running on port ${PORT}`));
